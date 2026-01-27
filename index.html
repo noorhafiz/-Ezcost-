@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EZ KOST</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body{font-family:sans-serif;background:#f3f4f6;}
+    .container{max-width:900px;margin:auto;background:#A8BBA2;padding:20px;border-radius:10px;}
+    .section-title{font-size:1.3rem;font-weight:600;margin-bottom:10px;border-bottom:2px solid #ddd;}
+    .input-group label{font-weight:500;display:block;margin-bottom:5px;}
+    .input-field{width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;}
+    .btn-primary{background:#4f46e5;color:white;padding:8px 14px;border-radius:6px;font-weight:600;}
+    .btn-secondary{background:#ef4444;color:white;padding:6px 10px;border-radius:6px;}
+  </style>
+</head>
+<body class="p-4">
+  <div class="container">
+    <h1 class="text-2xl font-bold text-center mb-4">Ezcost</h1>
+
+    <!-- Maklumat Produk -->
+    <div class="mb-8 bg-white p-4 rounded shadow">
+      <h2 class="section-title">Maklumat Produk</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="input-group">
+          <label>Nama Produk:</label>
+          <input type="text" id="productName" class="input-field" placeholder="Masukkan nama produk" oninput="updateCalculations()">
+        </div>
+        <div class="input-group">
+          <label>Anggaran Unit Pengeluaran (Bulanan):</label>
+          <input type="number" id="estimatedProduction" class="input-field" min="1" value="0" oninput="updateCalculations()">
+        </div>
+      </div>
+    </div>
+
+    <!-- Kos Bahan Langsung -->
+    <div class="mb-8 bg-white p-4 rounded shadow">
+      <h2 class="section-title">Kos Bahan Langsung</h2>
+      <div id="rawMaterialsContainer">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4 items-end raw-material-row">
+          <div class="input-group"><label>Nama Bahan:</label><input type="text" class="input-field" placeholder="Masukkan nama bahan" oninput="updateCalculations()"></div>
+          <div class="input-group"><label>Kuantiti/Unit:</label><input type="number" class="input-field" value="1" oninput="updateCalculations()"></div>
+          <div class="input-group"><label>Harga/Unit (RM):</label><input type="number" class="input-field" value="0" oninput="updateCalculations()"></div>
+          <div class="input-group"><label>Diskaun (%):</label><input type="number" class="input-field" value="0" oninput="updateCalculations()"></div>
+          <div class="flex justify-end"><button onclick="removeRow(this,'raw-material-row')" class="btn-secondary">Padam</button></div>
+        </div>
+      </div>
+      <button onclick="addRow('rawMaterialsContainer','raw-material-row')" class="btn-primary mt-2">Tambah item</button>
+      <p class="text-right font-semibold mt-4">Jumlah Kos Bahan: <span id="totalRawMaterialCost">RM 0.00</span></p>
+    </div>
+
+    <!-- Kos Buruh Langsung -->
+    <div class="mb-8 bg-white p-4 rounded shadow">
+      <h2 class="section-title">Kos Buruh Langsung</h2>
+      <div id="directLabourContainer">
+        <div class="grid grid-cols-1 md:grid-cols-6 gap-4 mb-4 items-end direct-labour-row">
+          <div class="input-group"><label>Jenis Buruh:</label><input type="text" class="input-field" placeholder="masukkan jenis pekerjaan" oninput="updateCalculations()"></div>
+          <div class="input-group"><label>Bilangan Pekerja:</label><input type="number" class="input-field" placeholder="masukkan bilangan pekerja" value="1" min="1" oninput="updateCalculations()"></div>
+          <div class="input-group"><label>Masa/Unit (Jam):</label><input type="number" class="input-field" value="0" oninput="updateCalculations()"></div>
+          <div class="input-group"><label>Kadar Gaji/Jam (RM):</label><input type="number" class="input-field" value="0" oninput="updateCalculations()"></div>
+          <div class="col-span-2 flex justify-end"><button onclick="removeRow(this,'direct-labour-row')" class="btn-secondary">Padam</button></div>
+        </div>
+      </div>
+      <button onclick="addRow('directLabourContainer','direct-labour-row')" class="btn-primary mt-2">Tambah item</button>
+      <p class="text-right font-semibold mt-4">Jumlah Kos Buruh: <span id="totalDirectLabourCost">RM 0.00</span></p>
+    </div>
+
+    <!-- Kos Overhed Kilang -->
+    <div class="mb-8 bg-white p-4 rounded shadow">
+      <h2 class="section-title">Kos Overhed Kilang</h2>
+      <div id="factoryOverheadContainer">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 items-end factory-overhead-row">
+          <div class="input-group"><label>Item Overhed:</label><input type="text" class="input-field" placeholder="Masukkan kos overhed" oninput="updateCalculations()"></div>
+          <div class="input-group"><label>Kos Bulanan (RM):</label><input type="number" class="input-field" value="0" oninput="updateCalculations()"></div>
+          <div class="col-span-2 flex justify-end"><button onclick="removeRow(this,'factory-overhead-row')" class="btn-secondary">Padam</button></div>
+        </div>
+      </div>
+      <button onclick="addRow('factoryOverheadContainer','factory-overhead-row')" class="btn-primary mt-2">Tambah item</button>
+      <p class="text-right font-semibold mt-4">Jumlah Overhed/Unit: <span id="totalFactoryOverheadCost">RM 0.00</span></p>
+    </div>
+
+    <!-- Ringkasan -->
+    <div class="mb-8 bg-white p-4 rounded shadow">
+      <h2 class="section-title">Ringkasan & Harga Disyorkan</h2>
+      <p>Bahan: <span id="summaryRawMaterial">RM 0.00</span></p>
+      <p>Buruh: <span id="summaryDirectLabour">RM 0.00</span></p>
+      <p>Overhed: <span id="summaryFactoryOverhead">RM 0.00</span></p>
+      <p><strong>Jumlah Kos/Unit:</strong> <span id="summaryManufacturingCost">RM 0.00</span></p>
+      <div class="input-group mt-4">
+        <label>Margin Untung (%)</label>
+        <input id="profitMargin" type="number" value="20" class="input-field" oninput="updateCalculations()">
+      </div>
+      <p class="font-bold text-green-700 mt-3">Harga Jualan Disyorkan: <span id="recommendedSellingPrice">RM 0.00</span></p>
+    </div>
+
+    <!-- Titik Pulang Modal (tanpa graf) -->
+    <div class="mb-8 bg-white p-4 rounded shadow">
+      <h2 class="section-title">Analisis Titik Pulang Modal (TPM)</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div class="input-group"><label>Harga Jualan Sebenar (RM)</label><input id="actualSellingPrice" type="number" class="input-field" placeholder="Masukkan harga jualan sebenar" value="0" oninput="updateCalculations()"></div>
+        <div class="input-group"><label>Kos Berubah Seunit (RM)</label><input id="variableCostPerUnit" class="input-field bg-gray-100" readonly></div>
+        <div class="input-group"><label>Kos Tetap Bulanan (RM)</label><input id="fixedCostMonthly" class="input-field bg-gray-100" readonly></div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div class="input-group"><label>Margin Sumbangan Seunit (RM)</label><input id="contributionPerUnit" class="input-field bg-gray-100" readonly></div>
+        <div class="input-group"><label>TPM (Unit)</label><input id="bepUnits" class="input-field bg-gray-100" readonly></div>
+        <div class="input-group"><label>TPM (RM)</label><input id="bepSales" class="input-field bg-gray-100" readonly></div>
+      </div>
+      <div class="bg-blue-50 p-4 rounded mt-4">
+        <h3 class="font-semibold mb-2">Interpretasi TPM:</h3>
+        <p class="text-sm">Untuk mencapai titik pulang modal, anda perlu menjual <span id="interpretBepUnits" class="font-bold">0</span> unit produk.</p>
+        <p class="text-sm">Ini bersamaan dengan jumlah jualan sebanyak <span id="interpretBepSales" class="font-bold">RM 0.00</span>.</p>
+        <p class="text-sm mt-2">Setelah menjual melebihi jumlah ini, setiap unit tambahan akan memberikan keuntungan.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+function money(n){
+  return 'RM ' + (isFinite(n) ? n : 0).toFixed(2);
+}
+
+function addRow(containerId,rowClass){
+  const c=document.getElementById(containerId);
+  let html='';
+
+  if(rowClass==='raw-material-row'){
+    html=`<div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4 items-end ${rowClass}">
+      <div class="input-group"><input type="text" class="input-field" oninput="updateCalculations()"></div>
+      <div class="input-group"><input type="number" class="input-field" value="1" oninput="updateCalculations()"></div>
+      <div class="input-group"><input type="number" class="input-field" value="0" oninput="updateCalculations()"></div>
+      <div class="input-group"><input type="number" class="input-field" value="0" oninput="updateCalculations()"></div>
+      <div class="flex justify-end"><button onclick="removeRow(this,'raw-material-row')" class="btn-secondary">Padam</button></div>
+    </div>`;
+  }
+
+  if(rowClass==='direct-labour-row'){
+    html=`<div class="grid grid-cols-1 md:grid-cols-6 gap-4 mb-4 items-end ${rowClass}">
+      <div class="input-group"><input type="text" class="input-field" oninput="updateCalculations()"></div>
+      <div class="input-group"><input type="number" class="input-field" value="1" min="1" oninput="updateCalculations()"></div>
+      <div class="input-group"><input type="number" class="input-field" value="0" oninput="updateCalculations()"></div>
+      <div class="input-group"><input type="number" class="input-field" value="0" oninput="updateCalculations()"></div>
+      <div class="col-span-2 flex justify-end"><button onclick="removeRow(this,'direct-labour-row')" class="btn-secondary">Padam</button></div>
+    </div>`;
+  }
+
+  if(rowClass==='factory-overhead-row'){
+    html=`<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 items-end ${rowClass}">
+      <div class="input-group"><input type="text" class="input-field" oninput="updateCalculations()"></div>
+      <div class="input-group"><input type="number" class="input-field" value="0" oninput="updateCalculations()"></div>
+      <div class="col-span-2 flex justify-end"><button onclick="removeRow(this,'factory-overhead-row')" class="btn-secondary">Padam</button></div>
+    </div>`;
+  }
+
+  c.insertAdjacentHTML('beforeend',html);
+  updateCalculations();
+}
+
+function removeRow(btn,rowClass){
+  const r=btn.closest(`.${rowClass}`);
+  if(r){ r.remove(); updateCalculations(); }
+}
+
+function updateCalculations(){
+
+  let totalRaw = 0;
+  let totalLab = 0;
+  let totalOver = 0;
+
+  const est = parseFloat(document.getElementById('estimatedProduction').value) || 1;
+  const margin = (parseFloat(document.getElementById('profitMargin').value)||0)/100;
+  const sellPrice = parseFloat(document.getElementById('actualSellingPrice').value)||0;
+
+  /* =========================
+     KOS BAHAN (BULANAN)
+  ========================= */
+  document.querySelectorAll('.raw-material-row').forEach(r=>{
+    const i=r.querySelectorAll('input');
+    const qty=parseFloat(i[1]?.value)||0;
+    const price=parseFloat(i[2]?.value)||0;
+    const disc=(parseFloat(i[3]?.value)||0)/100;
+    totalRaw += qty * price * (1 - disc);
+  });
+
+  /* =========================
+     KOS BURUH (BULANAN)
+  ========================= */
+  document.querySelectorAll('.direct-labour-row').forEach(r=>{
+    const i=r.querySelectorAll('input');
+    const pekerja=parseFloat(i[1]?.value)||0;
+    const masa=parseFloat(i[2]?.value)||0;
+    const kadar=parseFloat(i[3]?.value)||0;
+    totalLab += pekerja * masa * kadar;
+  });
+
+  /* =========================
+     KOS OVERHED (KOS TETAP)
+  ========================= */
+  document.querySelectorAll('.factory-overhead-row').forEach(r=>{
+    totalOver += parseFloat(r.querySelectorAll('input')[1]?.value)||0;
+  });
+
+  /* =========================
+     KOS PER UNIT
+  ========================= */
+  const rawPerUnit = totalRaw / est;
+  const labPerUnit = totalLab / est;
+  const overPerUnit = totalOver / est;
+
+  const costPerUnit = rawPerUnit + labPerUnit + overPerUnit;
+  const recommendedPrice = margin>0 ? costPerUnit/(1-margin) : 0;
+
+  /* Paparan kos */
+  document.getElementById('totalRawMaterialCost').textContent = money(rawPerUnit);
+  document.getElementById('totalDirectLabourCost').textContent = money(labPerUnit);
+  document.getElementById('totalFactoryOverheadCost').textContent = money(overPerUnit);
+
+  document.getElementById('summaryRawMaterial').textContent = money(rawPerUnit);
+  document.getElementById('summaryDirectLabour').textContent = money(labPerUnit);
+  document.getElementById('summaryFactoryOverhead').textContent = money(overPerUnit);
+  document.getElementById('summaryManufacturingCost').textContent = money(costPerUnit);
+  document.getElementById('recommendedSellingPrice').textContent = money(recommendedPrice);
+
+  /* =========================
+     ANALISIS TPM
+  ========================= */
+
+  const variableCostPerUnit = rawPerUnit + labPerUnit; // KOS BERUBAH
+  const fixedCostMonthly = totalOver;                  // KOS TETAP
+  const contribution = sellPrice - variableCostPerUnit;
+
+  let bepUnits = 0;
+  let bepSales = 0;
+
+  if(contribution > 0 && fixedCostMonthly > 0){
+    bepUnits = Math.ceil(fixedCostMonthly / contribution);
+    bepSales = bepUnits * sellPrice;
+  }
+
+  document.getElementById('variableCostPerUnit').value = variableCostPerUnit.toFixed(2);
+  document.getElementById('fixedCostMonthly').value = fixedCostMonthly.toFixed(2);
+  document.getElementById('contributionPerUnit').value = contribution.toFixed(2);
+
+  document.getElementById('bepUnits').value = bepUnits>0 ? bepUnits : '—';
+  document.getElementById('bepSales').value = bepSales>0 ? bepSales.toFixed(2) : '—';
+
+  /* =========================
+     INTERPRETASI TPM
+  ========================= */
+  document.getElementById('interpretBepUnits').textContent =
+    bepUnits>0 ? bepUnits : '—';
+
+  document.getElementById('interpretBepSales').textContent =
+    bepSales>0 ? money(bepSales) : '—';
+}
+</script>
+</body>
+</html>
